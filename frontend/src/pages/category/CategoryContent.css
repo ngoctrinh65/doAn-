@@ -1,0 +1,66 @@
+/* Khi màn hình có độ rộng ít hơn 60.0625rem */
+@media screen and (max-width: 60.0625rem) {
+  .category-image {
+      max-width: 100%; /* Hình ảnh sẽ co lại theo kích thước của container */
+  }
+}
+
+/* Khi màn hình có độ rộng ít hơn 60.0625rem và .header.is-narrow */
+@media screen and (min-width: 60.0625rem) {
+  .header.is-narrow .header__secondary__wrapper .header__category {
+      display: flex;
+      flex-direction: column;
+      padding-top: 1.125rem;
+  }
+
+  .header.is-narrow .header__secondary__wrapper .header__category__title {
+      border-top: 1px solid #ececec;
+      padding-top: 1.6875rem;
+      margin-bottom: 5px; /* Đảm bảo có khoảng cách giữa tiêu đề và danh sách */
+  }
+
+  .header.is-narrow .header__secondary__wrapper .header__category__links {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+  }
+
+
+  /* Đoạn CSS bạn muốn thêm */
+  .header__category {
+      display: flex;
+      flex-direction: column;
+  }
+
+  .header__category__title {
+      margin-bottom: 10px; /* Đảm bảo có khoảng cách giữa tiêu đề và danh sách */
+      margin-top: 35px;
+  }
+
+  .header__category__links {
+      list-style-type: none;
+      padding: 0;
+      margin: 0;
+  }
+
+
+}
+.category-image {
+  max-width: 100%; /* Đảm bảo hình ảnh không vượt quá kích thước của container */
+  max-height: 335px; /* Thiết lập chiều cao tối đa cho hình ảnh */
+}
+.row {
+  margin: 10px; /* Thêm margin cho div có class là 'row' */
+}
+
+.column {
+  margin: 20px; /* Thêm margin cho div có class là 'column' */
+}
+
+.header__category {
+  margin-bottom: 10px; /* Thêm margin cho div có class là 'header__category' */
+}
+
+.header__category__links li {
+  margin-bottom: 10px; /* Thêm margin cho mỗi list item trong danh sách */
+}

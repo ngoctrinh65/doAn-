@@ -1,0 +1,36 @@
+/* Add this to your stylesheet or define it in your component styles */
+.search-result-item {
+    position: relative;
+    transition: 0.3s; /* Add a smooth transition effect */
+  }
+  
+  .search-result-item:hover::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(128, 128, 128, 0.1); /* Adjust the alpha (last value) for the overlay opacity */
+    pointer-events: none; /* Ensure that the overlay doesn't interfere with mouse events */
+  }
+  .search-results-table {
+    width: 400px;
+    border-collapse: collapse;
+  }
+  
+  .search-result-row:hover {
+    background-color: rgba(128, 128, 128, 0.1);
+  }
+  
+  .image-cell {
+    padding-right: 10px;
+    
+  }
+  
+  /* Additional styles... */
+  .info-cell {
+    display: flex;
+    flex-direction: column;
+  }
+  

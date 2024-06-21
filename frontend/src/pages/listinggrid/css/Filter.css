@@ -1,0 +1,17 @@
+.filter-content {
+    position: fixed;
+    left: 0;
+    top: 50%; /* Điều chỉnh tùy theo vị trí mong muốn */
+    transform: translateY(-50%);
+    width: 21rem; /* Chiều rộng của phần bộ lọc */
+    background-color: white; /* Màu nền */
+    padding: 20px; /* Khoảng cách bên trong */
+    border-right: 1px solid #ddd; /* Viền phải */
+    z-index: 999; /* Đảm bảo phần tử này hiển thị trên các phần tử khác */
+    transition: left 0.3s ease; /* Hiệu ứng di chuyển */
+  }
+  
+  .filter-content.hidden {
+    bottom: -21rem; /* Ẩn bộ lọc bên trái của trang */
+  }
+  

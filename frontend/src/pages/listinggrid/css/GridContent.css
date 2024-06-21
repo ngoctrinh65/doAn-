@@ -1,0 +1,7 @@
+.categories-modal {
+    position: fixed;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+  }
