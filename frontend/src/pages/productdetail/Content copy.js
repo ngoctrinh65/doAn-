@@ -112,9 +112,9 @@ const Details = ({ setCartItems, cartItems }) => {
 
             setQuantity(1);
             toast.success("Thêm sản phẩm thành công");
-            setTimeout(() => {
-                window.location.reload();
-            }, 1100); // 1000 milliseconds (1 second) delay
+            // setTimeout(() => {
+            //     // window.location.reload();
+            // }, 1100); // 1000 milliseconds (1 second) delay
         } catch (error) {
             console.error('Error adding product to cart:', error);
         }

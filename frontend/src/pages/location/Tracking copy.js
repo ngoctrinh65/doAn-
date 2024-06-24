@@ -6,13 +6,21 @@ import L from "leaflet";
 import { OpenStreetMapProvider } from 'leaflet-geosearch';
 import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import carIconUrl from '../../assets/delivery-bike.png'; // Đảm bảo đường dẫn đúng
 
-// Fix marker icon issues with Leaflet in React
+// Sửa lỗi icon marker với Leaflet trong React
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
   iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
   shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+// Icon tùy chỉnh cho phương tiện
+const vehicleIcon = new L.Icon({
+  iconUrl: carIconUrl,
+  iconSize: [32, 32], // Điều chỉnh kích thước khi cần thiết
+  iconAnchor: [16, 32] // Điều chỉnh neo khi cần thiết
 });
 
 const RoutingControl = ({ currentPosition, addressPosition, setRouteInstructions }) => {
@@ -30,18 +38,18 @@ const RoutingControl = ({ currentPosition, addressPosition, setRouteInstructions
           L.latLng(addressPosition.latitude, addressPosition.longitude)
         ],
         routeWhileDragging: true,
-        createMarker: function () { return null; }, // Remove default markers
+        createMarker: function () { return null; }, // Loại bỏ marker mặc định
       });
 
       routingControlLayerRef.current = routingControlRef.current.addTo(map);
 
-      // Listen for routes found event to log instructions
+      // Lắng nghe sự kiện tìm thấy đường để ghi nhận hướng dẫn
       routingControlRef.current.on('routesfound', function (e) {
         const routes = e.routes;
         const instructionsWithCoords = routes[0].instructions.map((instruction, i) => {
           const stepCoordinates = routes[0].coordinates[instruction.index];
           return {
-            text: `Step ${i + 1}: ${instruction.text}`,
+            text: `Bước ${i + 1}: ${instruction.text}`,
             coordinates: stepCoordinates
           };
         });
@@ -72,9 +80,9 @@ const Tracking = () => {
   const [currentPosition, setCurrentPosition] = useState(null);
   const [addressPosition, setAddressPosition] = useState(null);
   const [error, setError] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(5); // Refresh interval in seconds
+  const [timeLeft, setTimeLeft] = useState(5); // Khoảng thời gian làm mới trong giây
   const [routeInstructions, setRouteInstructions] = useState([]);
-  const { orderId } = useParams(); // Get orderId from URL
+  const { orderId } = useParams(); // Lấy orderId từ URL
   const animatedMarkerRef = useRef(null);
 
   const fetchOrderDetails = async () => {
@@ -85,7 +93,7 @@ const Tracking = () => {
         setTimeout(() => {
           window.location.reload();
         }, 1000);
-        throw new Error('Failed to fetch order details');
+        throw new Error('Không thể lấy chi tiết đơn hàng');
       }
       const order = await response.json();
       const address = order.address;
@@ -96,7 +104,7 @@ const Tracking = () => {
           const { x, y } = result[0];
           setAddressPosition({ latitude: y, longitude: x });
         } else {
-          setError("Không thể tìm thấy địa chỉ.");
+          setError("Không tìm thấy địa chỉ.");
         }
       }).catch((err) => {
         setError(err.message);
@@ -129,7 +137,7 @@ const Tracking = () => {
   useEffect(() => {
     if (timeLeft === 0) {
       fetchOrderDetails();
-      setTimeLeft(5); // Reset timer to 5 seconds
+      setTimeLeft(5); // Thiết lập lại đồng hồ đếm thời gian là 5 giây
     }
 
     if (!timeLeft) return;
@@ -141,7 +149,7 @@ const Tracking = () => {
     return () => clearInterval(intervalId);
   }, [timeLeft]);
 
-  // Animation effect for marker
+  // Hiệu ứng animation cho marker
   useEffect(() => {
     if (routeInstructions.length > 0 && currentPosition) {
       let index = 0;
@@ -181,8 +189,8 @@ const Tracking = () => {
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
               />
-              <Marker ref={animatedMarkerRef} position={[currentPosition.latitude, currentPosition.longitude]}>
-                <Popup>Vị trí hiện tại của bạn</Popup>
+              <Marker ref={animatedMarkerRef} position={[currentPosition.latitude, currentPosition.longitude]} icon={vehicleIcon}>
+                <Popup>Vị trí hiện tại của xe</Popup>
               </Marker>
               <Marker position={[addressPosition.latitude, addressPosition.longitude]}>
                 <Popup>Địa chỉ giao hàng</Popup>
@@ -194,16 +202,7 @@ const Tracking = () => {
           )}
           {error && <p>Có lỗi xảy ra: {error}</p>}
         </div>
-        <div>
-          <h3>Chỉ dẫn đường đi:</h3>
-          <ul>
-            {routeInstructions.map((instruction, index) => (
-              <li key={index}>
-                {instruction.text} (Coordinates: {instruction.coordinates.lat}, {instruction.coordinates.lng})
-              </li>
-            ))}
-          </ul>
-        </div>
+        
       </div>
     </section>
   );

@@ -42,7 +42,7 @@ const Content = () => {
 
         fetchCartItems();
     }, [user, navigate]);
-    const handleRemoveCartItem = async (productId) => {
+    const handleRemoveCartItem = async (cartItemId,productId) => {
         try {
             // Lấy thông tin giỏ hàng từ state hoặc từ backend
             const cartId = cartItems.find(cartItem => cartItem.product.id === productId)?.cart?.id;
@@ -57,8 +57,13 @@ const Content = () => {
             await axios.delete(`http://localhost:8080/api/cartItems/${cartId}/${productId}`);
 
             // Cập nhật state của cartItems và products sau khi xóa
-            setCartItems(cartItems.filter(cartItem => cartItem.product.id !== productId));
-            setProducts(products.filter(item => item.id !== productId));
+            setCartItems(cartItems.filter(cartItem => cartItem.product.id !== cartItemId));
+            setProducts(products.filter(item => item.id !== cartItemId));
+            let temp = cartItems.filter(item => item.id !== cartItemId );
+            console.log("temp",temp)
+            localStorage.setItem("cartItems", JSON.stringify(temp))
+            // console.log(`Removing productId ${productId} from cartId ${cartId}`);
+
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
@@ -157,7 +162,14 @@ const Content = () => {
                                                 <td>
                                                     <figure className="itemside">
                                                         <div className="aside">
-                                                            <img src={`./images/items/${cartItem.product.thumbnail}`} className="img-sm" alt={cartItem.product.title} />
+                                                        <img
+                                                                src={`./images/items/${cartItem.product.thumbnail}`}
+                                                                className="img-sm"
+                                                                alt={cartItem.product.title}
+                                                                onClick={() => {
+                                                                    window.location.href = `/product-detail?productId=${cartItem.product.id}`;
+                                                                }}
+                                                            />
                                                         </div>
                                                         <figcaption className="info">
                                                             <a href="#" className="title text-dark" style={{ width: '420px', }}>{cartItem.product.title}</a>
@@ -206,7 +218,7 @@ const Content = () => {
                                                     </div>
                                                 </td>
                                                 <td className="text-right">
-                                                    <button className="btn btn-light" onClick={() => handleRemoveCartItem(cartItem.product.id)}> Xóa</button>
+                                                    <button className="btn btn-light" onClick={() => handleRemoveCartItem(cartItem.id,cartItem.product.id)}> Xóa</button>
                                                 </td>
                                             </tr>
                                         </tbody>

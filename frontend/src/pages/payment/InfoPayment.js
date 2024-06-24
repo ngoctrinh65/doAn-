@@ -163,7 +163,7 @@ const InfoPayment = () => {
         } else {
           alert("Failed to place the OrderDetail. Please try again.");
         }
-      
+        localStorage.removeItem('cartItems');
         navigate('/orders');
         window.location.reload();
       } catch (error) {

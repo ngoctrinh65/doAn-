@@ -50,24 +50,36 @@ const Details = ({ setCartItems, cartItems }) => {
         };
         fetchProduct();
     }, [productId]);
-
     const handleUpdateQuantity = async (productId, newQuantity, cartId) => {
         try {
             const response = await axios.put(`http://localhost:8080/api/cartItems/${cartId}/${productId}`, { quantity: newQuantity });
 
             if (response.status === 200) {
-                setCartItems((prevCartItems) =>
-                    prevCartItems.map((cartItem) =>
-                        cartItem.product.id === productId && cartItem.cart.id === cartId
-                            ? { ...cartItem, quantity: newQuantity }
-                            : cartItem
-                    )
-                );
+                return response.data; // Return updated cart item
             } else {
-                console.error('Failed to update cart item quantity:', response);
+                throw new Error(`Failed to update cart item quantity. Status: ${response.status}`);
             }
         } catch (error) {
-            console.error('Failed to update cart item quantity:', error);
+            if (error.response && error.response.status === 404) {
+                console.log('Cart item not found, falling back to POST:', error);
+
+                // Fallback to POST if cart item not found
+                const cartItem = {
+                    product: { id: productId },
+                    cart: { id: cartId },
+                    quantity: newQuantity
+                };
+
+                const postResponse = await axios.post('http://localhost:8080/api/cartItems', cartItem);
+
+                if (postResponse.data && postResponse.data.id) {
+                    return postResponse.data; // Return new cart item
+                } else {
+                    throw new Error('Failed to create new cart item.');
+                }
+            } else {
+                throw error; // Re-throw other errors
+            }
         }
     };
 
@@ -76,50 +88,69 @@ const Details = ({ setCartItems, cartItems }) => {
             navigate('/login');
             return;
         }
-
+    
         try {
+            console.log('Adding to cart:', { productId: product.id, quantity, cartItems });
             let cartId;
             const cartResponse = await axios.get(`http://localhost:8080/api/carts/user/${user.userId}`);
             if (cartResponse.data.length > 0) {
                 cartId = cartResponse.data[0].id;
             }
-
+            console.log('User cart ID:', cartId);
             const existingCartItem = cartItems.find(cartItem => cartItem.product.id === product.id && cartItem.cart.id === cartId);
-
+    
             if (existingCartItem) {
-                await handleUpdateQuantity(product.id, existingCartItem.quantity + quantity, cartId);
+                // Calculate new quantity
+                const updatedQuantity = existingCartItem.quantity + quantity;
+    
+                // Update cart item in backend
+                const updatedCartItem = await handleUpdateQuantity(product.id, updatedQuantity, cartId);
+    
+                if (updatedCartItem) {
+                    console.log('Updated cart item:', updatedCartItem);
+                    // Update cart items state if quantity updated
+                    setCartItems(prevCartItems =>
+                        prevCartItems.map(cartItem =>
+                            cartItem.product.id === product.id && cartItem.cart.id === cartId
+                                ? { ...cartItem, quantity: updatedCartItem.quantity }
+                                : cartItem
+                        )
+                    );
+                } else {
+                    throw new Error('Failed to update cart item quantity.');
+                }
             } else {
+                // If item does not exist in cart, add new cart item
                 const cartItem = {
                     product: { id: product.id },
                     cart: { id: cartId },
                     quantity: quantity
                 };
-
+    
                 const response = await axios.post('http://localhost:8080/api/cartItems', cartItem);
-
+    
                 if (response.data && response.data.id) {
                     const newCartItem = {
                         ...response.data,
                         product: { id: product.id },
                         cart: { id: cartId }
                     };
-                    setCartItems((prevCartItems) => [...prevCartItems, newCartItem]);
-                    localStorage.setItem("cartItems", JSON.stringify([...cartItems, newCartItem]));
+                    console.log('Added new cart item:', newCartItem);
+                    setCartItems(prevCartItems => [...prevCartItems, newCartItem]);
+                    // localStorage.setItem("cartItems", JSON.stringify([...cartItems, newCartItem])); // Avoid unnecessary localStorage update
                 } else {
-                    console.error('Error in response data:', response.data);
+                    throw new Error('Failed to add new cart item.');
                 }
             }
-
+    
+            // Reset quantity input after adding to cart
             setQuantity(1);
             toast.success("Thêm sản phẩm thành công");
-            setTimeout(() => {
-                window.location.reload();
-            }, 1100); // 1000 milliseconds (1 second) delay
         } catch (error) {
             console.error('Error adding product to cart:', error);
         }
     };
-
+    
     const buyNow = async () => {
         if (!user) {
             navigate('/login');
