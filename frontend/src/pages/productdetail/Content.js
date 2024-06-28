@@ -87,16 +87,16 @@ const Details = ({ setCartItems, cartItems }) => {
             // Fetch the current product details
             const productResponse = await axios.get(`http://localhost:8080/api/products/${productId}`);
             const productData = productResponse.data;
-    
+
             // Update the product quantity
             const updatedProductData = {
                 ...productData,
                 quantity: newQuantity
             };
-    
+
             // Extract and keep only the fields you want to keep unchanged
             const { id, deleted, description, discount, price, thumbnail, title, line_id, created_at, updated_at } = updatedProductData;
-    
+
             // Send the updated data back to the server
             const response = await axios.put(`http://localhost:8080/api/products/${productId}`, {
                 id,
@@ -111,7 +111,7 @@ const Details = ({ setCartItems, cartItems }) => {
                 updated_at,
                 quantity: newQuantity // Ensure quantity is updated
             });
-    
+
             if (response.status === 200) {
                 return response.data;
             } else {
@@ -121,7 +121,7 @@ const Details = ({ setCartItems, cartItems }) => {
             console.error('Error updating product quantity:', error);
         }
     };
-    
+
     const handleAddToCart = async () => {
         if (!user) {
             navigate('/login');
@@ -192,6 +192,8 @@ const Details = ({ setCartItems, cartItems }) => {
             setQuantity(1);
             toast.success("Thêm sản phẩm thành công");
             setTimeout(() => {
+                window.location.reload();
+
             }, 2000);
         } catch (error) {
             console.error('Error adding product to cart:', error);
@@ -264,6 +266,7 @@ const Details = ({ setCartItems, cartItems }) => {
             // Reset quantity input after adding to cart
             setQuantity(1);
             setTimeout(() => {
+                window.location.reload();
                 navigate('/gio-hang'); // Navigate to shopping cart after adding item
             }, 1000);
         } catch (error) {
@@ -336,11 +339,11 @@ const Details = ({ setCartItems, cartItems }) => {
                                     <dd className="col-sm-9">3-4 ngày</dd>
                                     <dt className="col-sm-3">Tình trạng</dt>
                                     <dd className="col-sm-9">{product.quantity > 0 ? "Còn hàng" : "Hết hàng"}</dd>
-                                    </dl>
+                                </dl>
                                 <div className="form-group col-md d-flex align-items-center">
                                     <button className="btn btn-primary" onClick={decreaseQuantity}>-</button>
-                                    <input type="text"         value={product.quantity === 0 ? 0 : quantity}
- className="form-control text-center mx-2" style={{ width: '70px' }} readOnly />
+                                    <input type="text" value={product.quantity === 0 ? 0 : quantity}
+                                        className="form-control text-center mx-2" style={{ width: '70px' }} readOnly />
                                     <button className="btn btn-primary" onClick={increaseQuantity}>+</button>
                                 </div>
                                 <div className="form-row mt-4">
