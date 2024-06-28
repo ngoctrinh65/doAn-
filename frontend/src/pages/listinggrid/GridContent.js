@@ -155,7 +155,7 @@ const GridContent = () => {
 												{row.discount > 0 && (
 													<span className="badge badge-danger">-{row.discount}%</span>
 												)}
-												<Link to={`/product-detail?productId=${row.id}`} className="img-wrap" style={{ height: '450px', objectFit: 'cover', width: '100%' }}>
+												<Link to={`/chi-tiet-san-pham?productId=${row.id}`} className="img-wrap" style={{ height: '450px', objectFit: 'cover', width: '100%' }}>
 													<img src={`./images/items/${row.thumbnail}`} />
 												</Link>
 											</div>

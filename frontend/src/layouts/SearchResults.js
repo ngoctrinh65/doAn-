@@ -34,12 +34,12 @@ const SearchResults = ({ results, onLoadMore, onProductClick, onClose }) => {
               return (
                 <tr key={result.id} className="search-result-row">
                   <td className="image-cell">
-                    <Link to={`/product-detail?productId=${result.id}`} onClick={onProductClick}>
+                    <Link to={`/chi-tiet-san-pham?productId=${result.id}`} onClick={onProductClick}>
                       <img src={`./images/items/${result.thumbnail}`} alt={`Thumbnail for ${result.title}`} style={{ height: '100px' }} />
                     </Link>
                   </td>
                   <td className="info-cell mt-4">
-                    <Link to={`/product-detail?productId=${result.id}`} onClick={onProductClick}>
+                    <Link to={`/chi-tiet-san-pham?productId=${result.id}`} onClick={onProductClick}>
                       <div className='title'>{result.title}</div>
                       <div className='price'>{formatPrice(result.price)}</div>
                     </Link>

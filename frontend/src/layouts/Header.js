@@ -208,7 +208,7 @@ function Header({ cartItemCount }) {
 								</div>
 								{user ? (
 									<div className="widget-header">
-										<Link to={`/shopping-cart`} className="widget-view">
+										<Link to={`/gio-hang`} className="widget-view">
 											<div className="icon-area">
 												<span className="notify">{cartItemCount}</span>
 												<i className="fa fa-shopping-cart"></i>
@@ -218,7 +218,7 @@ function Header({ cartItemCount }) {
 									</div>
 								) : (
 									<div className="widget-header">
-										<Link to={`/shopping-cart`} className="widget-view">
+										<Link to={`/gio-hang`} className="widget-view">
 											<div className="icon-area">
 												<i className="fa fa-shopping-cart"></i>
 											</div>

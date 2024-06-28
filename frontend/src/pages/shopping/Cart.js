@@ -103,14 +103,9 @@ const Content = () => {
             console.error('Failed to update cart item quantity:', error);
         }
     };
-    
-    // const handleIncreaseQuantity = async (cartItemId, currentQuantity) => {
-    //     const updatedQuantity = currentQuantity + 1;
-    //     await handleUpdateQuantity(cartItemId, updatedQuantity);
-    // };
     const handleIncreaseQuantity = async (productId, currentQuantity) => {
         const product = products.find(product => product.id === productId);
-        if (product && currentQuantity < product.quantity) {
+        if (product && currentQuantity < product.quantity+1 ) {
             const updatedQuantity = currentQuantity + 1;
             await handleUpdateQuantity(productId, updatedQuantity);
         } else {
@@ -167,7 +162,7 @@ const Content = () => {
                                                                 className="img-sm"
                                                                 alt={cartItem.product.title}
                                                                 onClick={() => {
-                                                                    window.location.href = `/product-detail?productId=${cartItem.product.id}`;
+                                                                    window.location.href = `/chi-tiet-san-pham?productId=${cartItem.product.id}`;
                                                                 }}
                                                             />
                                                         </div>

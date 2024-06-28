@@ -66,7 +66,7 @@ const SearchResultsPage = () => {
                                 <figure className="card card-product-grid">
                                     <div className="img-wrap">
                                         <span className="badge badge-danger"> MỚI </span>
-                                        <a href={`/product-detail?productId=${row.id}`} className="img-wrap" style={{ height: '450px', objectFit: 'cover', width: '100%' }}>
+                                        <a href={`/chi-tiet-san-pham?productId=${row.id}`} className="img-wrap" style={{ height: '450px', objectFit: 'cover', width: '100%' }}>
                                             <img src={`./images/items/${row.thumbnail}`} alt={row.title} />
                                         </a>
                                     </div>

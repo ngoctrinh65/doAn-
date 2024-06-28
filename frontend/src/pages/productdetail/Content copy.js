@@ -161,7 +161,7 @@ const Details = ({ setCartItems, cartItems }) => {
 
             setQuantity(1);
             setTimeout(() => {
-                navigate('/shopping-cart'); // Navigate to shopping cart after adding item
+                navigate('/gio-hang'); // Navigate to shopping cart after adding item
             }, 1000);
         } catch (error) {
             console.error('Error adding product to cart:', error);
@@ -241,7 +241,7 @@ const Details = ({ setCartItems, cartItems }) => {
                                 </div>
                                 <div className="form-row mt-4">
                                     <div className="form-group col-md">
-                                        <Link to={`/shopping-cart`} className="widget-view">
+                                        <Link to={`/gio-hang`} className="widget-view">
                                             <button className="btn" onClick={buyNow} style={{ backgroundColor: 'orange', color: '#fff' }}>
                                                 Mua ngay
                                             </button>

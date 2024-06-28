@@ -1,102 +1,147 @@
-import React, { useState, useEffect, useRef } from "react";
-import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import { useParams } from 'react-router-dom';
-import "leaflet/dist/leaflet.css";
-import L from "leaflet";
+import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import { OpenStreetMapProvider } from 'leaflet-geosearch';
-import "leaflet-routing-machine";
-import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
-import carIconUrl from '../../assets/delivery-bike.png'; // Đảm bảo đường dẫn đúng
+import 'leaflet-routing-machine';
+import 'leaflet-routing-machine/dist/leaflet-routing-machine.css';
+import carIconUrl from '../../assets/delivery-bike.png';
 
-// Sửa lỗi icon marker với Leaflet trong React
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
-  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
-  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
-  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
 });
 
-// Icon tùy chỉnh cho phương tiện
 const vehicleIcon = new L.Icon({
-  iconUrl: carIconUrl,
-  iconSize: [32, 32], // Điều chỉnh kích thước khi cần thiết
-  iconAnchor: [16, 32] // Điều chỉnh neo khi cần thiết
+iconUrl: carIconUrl,
+iconSize: [32, 32],
+iconAnchor: [16, 32],
 });
 
+// Inside RoutingControl component
 const RoutingControl = ({ currentPosition, addressPosition, setRouteInstructions }) => {
-  const map = useMap();
-  const routingControlRef = useRef(null);
-  const routingControlLayerRef = useRef(null);
+const map = useMap();
+const routingControlRef = useRef(null);
+// Automatically reload page when there are changes in currentPosition or addressPosition
 
-  useEffect(() => {
-    if (!map) return;
+useEffect(() => {
+  if (!map) return;
 
-    if (!routingControlRef.current) {
-      routingControlRef.current = L.Routing.control({
-        waypoints: [
-          L.latLng(currentPosition.latitude, currentPosition.longitude),
-          L.latLng(addressPosition.latitude, addressPosition.longitude)
-        ],
-        routeWhileDragging: true,
-        createMarker: function () { return null; }, // Loại bỏ marker mặc định
-      });
+  if (routingControlRef.current) {
+    map.removeControl(routingControlRef.current);
+  }
 
-      routingControlLayerRef.current = routingControlRef.current.addTo(map);
+  // Check if currentPosition and addressPosition are valid before using them
+  if (currentPosition && currentPosition.latitude && currentPosition.longitude &&
+      addressPosition && addressPosition.latitude && addressPosition.longitude) {
 
-      // Lắng nghe sự kiện tìm thấy đường để ghi nhận hướng dẫn
-      routingControlRef.current.on('routesfound', function (e) {
-        const routes = e.routes;
-        const instructionsWithCoords = routes[0].instructions.map((instruction, i) => {
-          const stepCoordinates = routes[0].coordinates[instruction.index];
-          return {
-            text: `Bước ${i + 1}: ${instruction.text}`,
-            coordinates: stepCoordinates
-          };
-        });
-        setRouteInstructions(instructionsWithCoords);
-      });
-    } else {
-      routingControlRef.current.setWaypoints([
+    // Routing control for the main route
+    const mainRoutingControl = L.Routing.control({
+      waypoints: [
         L.latLng(currentPosition.latitude, currentPosition.longitude),
-        L.latLng(addressPosition.latitude, addressPosition.longitude)
-      ]);
-    }
+        L.latLng(addressPosition.latitude, addressPosition.longitude),
+      ],
+      routeWhileDragging: true,
+      createMarker: function () {
+        return null;
+      }, // Remove default markers
+    }).addTo(map);
 
-    if (routingControlLayerRef.current) {
-      map.fitBounds(routingControlRef.current.getPlan().getWaypoints().map(wp => wp.latLng));
-    }
+    // Routing control for the blue route
+    const blueRoutingControl = L.Routing.control({
+      waypoints: [
+        L.latLng(10.8231, 106.6297),  // Coordinates for the blue route start
+        L.latLng(addressPosition.latitude, addressPosition.longitude),
+      ],
+      lineOptions: {
+        styles: [{ color: 'blue', opacity: 0.6, weight: 4 }],
+      },
+      routeWhileDragging: false,
+      createMarker: function () {
+        return null;
+      }, // Remove default markers
+    }).addTo(map);
+
+    // Listen for route found event to capture instructions
+    mainRoutingControl.on('routesfound', function (e) {
+      const routes = e.routes;
+      const instructionsWithCoords = routes[0].instructions.map((instruction, i) => {
+        const stepCoordinates = routes[0].coordinates[instruction.index];
+        return {
+          text: `Step ${i + 1}: ${instruction.text}`,
+          coordinates: stepCoordinates,
+        };
+      });
+
+      setRouteInstructions(instructionsWithCoords);
+    });
+
+    // Listen for route found event for the blue route
+    blueRoutingControl.on('routesfound', function (e) {
+      const routes = e.routes;
+      const instructionsWithCoords = routes[0].instructions.map((instruction, i) => {
+        const stepCoordinates = routes[0].coordinates[instruction.index];
+        return {
+          text: `Blue Route - Step ${i + 1}: ${instruction.text}`,
+          coordinates: stepCoordinates,
+        };
+      });
+
+      // Optionally, you can set the blue route instructions state if needed
+      // setBlueRouteInstructions(instructionsWithCoords);
+    });
 
     return () => {
-      if (routingControlLayerRef.current) {
-        map.removeLayer(routingControlLayerRef.current);
+      if (mainRoutingControl) {
+        map.removeControl(mainRoutingControl);
+      }
+      if (blueRoutingControl) {
+        map.removeControl(blueRoutingControl);
       }
     };
-  }, [map, currentPosition, addressPosition, setRouteInstructions]);
+  }
+}, [map, currentPosition, addressPosition, setRouteInstructions]);
 
-  return null;
+return null;
 };
 
 const Tracking = () => {
-  const [currentPosition, setCurrentPosition] = useState(null);
-  const [addressPosition, setAddressPosition] = useState(null);
-  const [error, setError] = useState(null);
-  const [timeLeft, setTimeLeft] = useState(5); // Khoảng thời gian làm mới trong giây
-  const [routeInstructions, setRouteInstructions] = useState([]);
-  const { orderId } = useParams(); // Lấy orderId từ URL
-  const animatedMarkerRef = useRef(null);
+const [currentPosition, setCurrentPosition] = useState(null);
+const [addressPosition, setAddressPosition] = useState(null);
+const [error, setError] = useState(null);
+const [routeInstructions, setRouteInstructions] = useState([]);
+const { orderId } = useParams();
+const animatedMarkerRef = useRef(null);
 
+useEffect(() => {
   const fetchOrderDetails = async () => {
     try {
       const url = `http://localhost:8080/api/orders/${orderId}`;
       const response = await fetch(url);
-      if (!response.ok) {
-        setTimeout(() => {
-          window.location.reload();
-        }, 1000);
-        throw new Error('Không thể lấy chi tiết đơn hàng');
-      }
+     
       const order = await response.json();
       const address = order.address;
+
+      // Lấy vị trí từ order.position và xác định mảng từ order.location
+      if (order.position && order.location) {
+        const positionIndex = order.position - 1; // Vị trí trong order.position
+        const location = JSON.parse(order.location);
+        
+        if (positionIndex >= 0 && positionIndex < location.length) {
+          const firstLocation = {
+            latitude: location[positionIndex].lat,
+            longitude: location[positionIndex].lng,
+          };
+          setCurrentPosition(firstLocation);
+        } else {
+          setError('Invalid position index or location data.');
+        }
+      } else {
+        setError('Order position or location data missing.');
+      }
 
       const provider = new OpenStreetMapProvider();
       provider.search({ query: address }).then((result) => {
@@ -104,7 +149,7 @@ const Tracking = () => {
           const { x, y } = result[0];
           setAddressPosition({ latitude: y, longitude: x });
         } else {
-          setError("Không tìm thấy địa chỉ.");
+          setError('Address not found.');
         }
       }).catch((err) => {
         setError(err.message);
@@ -114,98 +159,51 @@ const Tracking = () => {
     }
   };
 
-  useEffect(() => {
-    fetchOrderDetails();
-  }, [orderId]);
+  fetchOrderDetails();
+}, [orderId]);
 
-  useEffect(() => {
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          const { latitude, longitude } = position.coords;
-          setCurrentPosition({ latitude, longitude });
-        },
-        (error) => {
-          setError(error.message);
-        }
-      );
-    } else {
-      setError("Trình duyệt của bạn không hỗ trợ Geolocation");
-    }
-  }, []);
-
-  useEffect(() => {
-    if (timeLeft === 0) {
-      fetchOrderDetails();
-      setTimeLeft(5); // Thiết lập lại đồng hồ đếm thời gian là 5 giây
-    }
-
-    if (!timeLeft) return;
-
-    const intervalId = setInterval(() => {
-      setTimeLeft(timeLeft - 1);
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [timeLeft]);
-
-  // Hiệu ứng animation cho marker
-  useEffect(() => {
-    if (routeInstructions.length > 0 && currentPosition) {
-      let index = 0;
-
-      const intervalId = setInterval(() => {
-        if (index >= routeInstructions.length) {
-          clearInterval(intervalId);
-          return;
-        }
-
-        const nextPos = routeInstructions[index].coordinates;
-        setCurrentPosition({ latitude: nextPos.lat, longitude: nextPos.lng });
-
-        if (animatedMarkerRef.current) {
-          animatedMarkerRef.current.setLatLng([nextPos.lat, nextPos.lng]);
-        }
-
-        index++;
-      }, 2000);
-
-      return () => clearInterval(intervalId);
-    }
-  }, [routeInstructions, currentPosition]);
-
-  return (
-    <section className="section-pagetop bg-gray">
-      <div className="container">
-        <h2 className="title-page">Theo dõi vị trí</h2>
-        <div className="col-md-12">
-          {(currentPosition && addressPosition) ? (
-            <MapContainer
-              center={[currentPosition.latitude, currentPosition.longitude]}
-              zoom={15}
-              style={{ height: "400px", width: "100%" }}
+return (
+  <section className="section-pagetop bg-gray">
+    <div className="container">
+      <h2 className="title-page">Tracking Position</h2>
+      <div className="col-md-12">
+        {(currentPosition && addressPosition) ? (
+          <MapContainer
+            center={[currentPosition.latitude, currentPosition.longitude]}
+            zoom={15}
+            style={{ height: '400px', width: '100%' }}
+          >
+            <TileLayer
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            />
+            <Marker
+              ref={animatedMarkerRef}
+              position={[currentPosition.latitude, currentPosition.longitude]}
+              icon={vehicleIcon}
             >
-              <TileLayer
-                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-              />
-              <Marker ref={animatedMarkerRef} position={[currentPosition.latitude, currentPosition.longitude]} icon={vehicleIcon}>
-                <Popup>Vị trí hiện tại của xe</Popup>
-              </Marker>
-              <Marker position={[addressPosition.latitude, addressPosition.longitude]}>
-                <Popup>Địa chỉ giao hàng</Popup>
-              </Marker>
-              <RoutingControl currentPosition={currentPosition} addressPosition={addressPosition} setRouteInstructions={setRouteInstructions} />
-            </MapContainer>
-          ) : (
-            <p>Đang tải vị trí...</p>
-          )}
-          {error && <p>Có lỗi xảy ra: {error}</p>}
-        </div>
-        
+              <Popup>Vị trí hiện tại</Popup>
+            </Marker>
+            <Marker position={[10.8231, 106.6297]}>
+              <Popup>Địa chỉ shop</Popup>
+            </Marker>
+            <Marker position={[addressPosition.latitude, addressPosition.longitude]}>
+              <Popup>Địa chỉ giao hàng</Popup>
+            </Marker>
+            <RoutingControl
+              currentPosition={currentPosition}
+              addressPosition={addressPosition}
+              setRouteInstructions={setRouteInstructions}
+            />
+          </MapContainer>
+        ) : (
+          <p>{error}</p>
+        )}
       </div>
-    </section>
-  );
+    </div>
+  </section>
+);
 };
 
 export default Tracking;
+

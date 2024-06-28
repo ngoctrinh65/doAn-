@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jun 20, 2024 at 09:54 AM
+-- Generation Time: Jun 28, 2024 at 03:46 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -60,7 +60,7 @@ CREATE TABLE `cart_item` (
 
 INSERT INTO `cart_item` (`id`, `quantity`, `cart_id`, `product_id`) VALUES
 (79, 2, 15, 3),
-(85, 2, 85, 2);
+(91, 2, 85, 2);
 
 -- --------------------------------------------------------
 
@@ -194,18 +194,20 @@ CREATE TABLE `orders` (
   `phone_number` varchar(255) DEFAULT NULL,
   `status` int(11) DEFAULT NULL,
   `total_money` int(11) DEFAULT NULL,
-  `user_id` bigint(20) DEFAULT NULL
+  `user_id` bigint(20) DEFAULT NULL,
+  `location` varchar(500) DEFAULT NULL,
+  `position` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Dumping data for table `orders`
 --
 
-INSERT INTO `orders` (`id`, `address`, `email`, `fullname`, `note`, `order_date`, `phone_number`, `status`, `total_money`, `user_id`) VALUES
-(2, '2 Đ. Hồ Xuân Hương, Phường 14, Bình Thạnh, Thành phố Hồ Chí Minh', '123@gmail.com', 'âs', 'Giao hàng tiêu chuẩn', '2024-05-31', '4331544321', 0, 77615, 1),
-(3, '495/2 Tô Hiến Thành, Quận 10, TP. HCM', 'zxc@gmail.com', 'âs', 'Giao hàng tiêu chuẩn', '2024-05-31', '4331544321', 1, 77615, 14),
-(4, '297/18 Hậu Giang, Quận 6, TP. HCM', 'zxc@gmail.com', 'zxc', 'Giao hàng nhanh', '2024-06-01', '5476437698', 0, 342325, 14),
-(5, '495/2 Tô Hiến Thành, Quận 10, TP. HCM', 'zxc@gmail.com', 'dsf', 'Giao hàng tiêu chuẩn', '2024-06-01', '6756785645', 0, 64553, 14);
+INSERT INTO `orders` (`id`, `address`, `email`, `fullname`, `note`, `order_date`, `phone_number`, `status`, `total_money`, `user_id`, `location`, `position`) VALUES
+(2, '2 Đ. Hồ Xuân Hương, Phường 14, Bình Thạnh, Thành phố Hồ Chí Minh', '123@gmail.com', 'âs', 'Giao hàng tiêu chuẩn', '2024-05-31', '4331544321', 0, 77615, 1, NULL, NULL),
+(3, '495/2 Tô Hiến Thành, Quận 10, TP. HCM', 'zxc@gmail.com', 'âs', 'Giao hàng tiêu chuẩn', '2024-05-31', '4331544321', 1, 77615, 14, NULL, NULL),
+(4, '297/18 Hậu Giang, Quận 6, TP. HCM', 'zxc@gmail.com', 'zxc', 'Giao hàng nhanh', '2024-06-01', '5476437698', 0, 342325, 14, '[{\"lat\":10.839,\"lng\":106.78252},{\"lat\":10.83907,\"lng\":106.78259},{\"lat\":10.83916,\"lng\":106.78205},{\"lat\":10.84057,\"lng\":106.78141},{\"lat\":10.84076,\"lng\":106.78152},{\"lat\":10.84448,\"lng\":106.78124},{\"lat\":10.84895,\"lng\":106.77434},{\"lat\":10.84966,\"lng\":106.77342},{\"lat\":10.84969,\"lng\":106.77154},{\"lat\":10.84982,\"lng\":106.76787}]', 9),
+(5, '495/2 Tô Hiến Thành, Quận 10, TP. HCM', 'zxc@gmail.com', 'dsf', 'Giao hàng tiêu chuẩn', '2024-06-01', '6756785645', 0, 64553, 14, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -232,8 +234,8 @@ CREATE TABLE `products` (
 --
 
 INSERT INTO `products` (`id`, `deleted`, `description`, `discount`, `price`, `quantity`, `thumbnail`, `title`, `line_id`, `created_at`, `updated_at`) VALUES
-(1, 0, 'sản phẩm\r\nN°5, mùi hương của người phụ nữ. Đóa hoa rực rỡ và ngát hương hòa quyện cùng nốt aldehyde, gói gọn trong lọ thủy tinh có thiết kế tối giản mang tính biểu tượng. Một mùi hương huyền thoại và bất tận.\r\n\r\nthành phần\r\nEau de Parfum lấy cảm hứng từ h', 5, 13340, 67, 'N5(1).jpg', 'EAU DE PARFUM DẠNG XỊT', 1, '2024-04-10', '2024-04-10'),
-(2, 0, 'sản phẩm\r\n\r\nCHANEL mang tới thiết kế hộp phiên bản giới hạn phối màu trắng và vàng ánh kim cho mùa lễ hội, mở ra chai nước hoa N°5 Eau de Parfum được trưng bày tinh tế.\r\n\r\nthành phần\r\nPhiên bản Eau de Parfum lấy cảm hứng từ phiên bản Parfum và hợp hương h', 5, 16340, 2, 'N5(2).jpg', 'EAU DE PARFUM PHIÊN BẢN GIỚI HẠN', 1, '2024-04-10', '2024-04-10'),
+(1, 0, 'sản phẩm\nN°5, mùi hương của người phụ nữ. Đóa hoa rực rỡ và ngát hương hòa quyện cùng nốt aldehyde, gói gọn trong lọ thủy tinh có thiết kế tối giản mang tính biểu tượng. Một mùi hương huyền thoại và bất tận.\n\nthành phần\nEau de Parfum lấy cảm hứng từ h', 5, 13340, 67, 'N5(1).jpg', 'EAU DE PARFUM DẠNG XỊT', 1, '2024-04-10', '2024-04-10'),
+(2, 0, 'sản phẩm\nN°5, mùi hương của người phụ nữ. Đóa hoa rực rỡ và ngát hương hòa quyện cùng nốt aldehyde, gói gọn trong lọ thủy tinh có thiết kế tối giản mang tính biểu tượng. Một mùi hương huyền thoại và bất tận.\n\nthành phần\nEau de Parfum lấy cảm hứng từ h', 16, 1340, 0, 'N5(2).jpg', 'EAU DE PARFUM DẠNG XỊT\n', NULL, '2024-04-10', '2024-04-10'),
 (3, 0, 'sản phẩm\r\nN°5 L’EAU chính là phiên bản N°5 của thời hiện tại. Một đoá hoa rực rỡ trừu tượng mang tinh thần hiện đại và tươi mới. N°5 L’EAU tôn vinh sự tối giản qua chính diện mạo của nó. Biểu tượng chai nước hoa kinh điển được dập nổi trên hộp bìa cứng. B', 5, 16340, 67, 'N5(3).jpg', 'EAU DE TOILETTE DẠNG XỊT', 1, '2024-04-10', '2024-04-10'),
 (4, 0, 'sản phẩm\r\nN°5, mùi hương của sự nữ tính.\r\nEau de Toilette là một phiên bản sôi nổi và rực rỡ hơn so với phiên bản đầu tiên được ra mắt vào năm 1921 bởi Gabrielle Chanel. Một mùi hương ấm áp và tươi sáng, được đặt trong một thiết kế chai dạng xịt với phần ', 5, 16340, 67, 'N5(4).jpg', 'EAU DE TOILETTE DẠNG XỊT', 1, '2024-04-10', '2024-04-10'),
 (5, 0, 'sản phẩm\r\nMùa lễ hội này, CHANEL đã sáng tạo một set quà tặng bao gồm nước hoa N°5 Eau de Parfum và Dầu dưỡng thể dạng xịt N°5 The Body Oil, trong thiết kế độc quyền gợi nên dáng hình chai nước hoa mang tính biểu tượng. Một chu trình mùi hương sang trọng ', 0, 16340, 67, 'N5(5).jpg', 'SET NƯỚC HOA EAU DE PARFUM 50 ML VÀ DẦU DƯỠNG THỂ DẠNG XỊT SPRAY BODY OIL 100 ML', 1, '2024-04-10', '2024-04-10'),
@@ -481,7 +483,7 @@ ALTER TABLE `cart`
 -- AUTO_INCREMENT for table `cart_item`
 --
 ALTER TABLE `cart_item`
-  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=86;
+  MODIFY `id` bigint(20) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=92;
 
 --
 -- AUTO_INCREMENT for table `categories`

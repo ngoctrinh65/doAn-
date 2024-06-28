@@ -34,9 +34,9 @@ const Main = () => (
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="search-page" element={<SearchResultsPage />} />
-      <Route path="product-detail" element={<ProductDetail />} />
+      <Route path="chi-tiet-san-pham" element={<ProductDetail />} />
       <Route path="offers" element={<Offers />} />
-      <Route path="shopping-cart" element={<ProtectedRoute><Shopping /></ProtectedRoute>} />
+      <Route path="gio-hang" element={<ProtectedRoute><Shopping /></ProtectedRoute>} />
       <Route path="payment-info" element={<InfoPayment />} />
       <Route path="register" element={<Register />} />
       <Route path="userlogin" element={<UserLogin />} />

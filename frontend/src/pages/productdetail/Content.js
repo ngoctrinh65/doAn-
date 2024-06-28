@@ -82,13 +82,51 @@ const Details = ({ setCartItems, cartItems }) => {
             }
         }
     };
-
+    const updateProductQuantity = async (productId, newQuantity) => {
+        try {
+            // Fetch the current product details
+            const productResponse = await axios.get(`http://localhost:8080/api/products/${productId}`);
+            const productData = productResponse.data;
+    
+            // Update the product quantity
+            const updatedProductData = {
+                ...productData,
+                quantity: newQuantity
+            };
+    
+            // Extract and keep only the fields you want to keep unchanged
+            const { id, deleted, description, discount, price, thumbnail, title, line_id, created_at, updated_at } = updatedProductData;
+    
+            // Send the updated data back to the server
+            const response = await axios.put(`http://localhost:8080/api/products/${productId}`, {
+                id,
+                deleted,
+                description,
+                discount,
+                price,
+                thumbnail,
+                title,
+                line_id,
+                created_at,
+                updated_at,
+                quantity: newQuantity // Ensure quantity is updated
+            });
+    
+            if (response.status === 200) {
+                return response.data;
+            } else {
+                throw new Error(`Failed to update product quantity. Status: ${response.status}`);
+            }
+        } catch (error) {
+            console.error('Error updating product quantity:', error);
+        }
+    };
+    
     const handleAddToCart = async () => {
         if (!user) {
             navigate('/login');
             return;
         }
-    
         try {
             console.log('Adding to cart:', { productId: product.id, quantity, cartItems });
             let cartId;
@@ -98,14 +136,14 @@ const Details = ({ setCartItems, cartItems }) => {
             }
             console.log('User cart ID:', cartId);
             const existingCartItem = cartItems.find(cartItem => cartItem.product.id === product.id && cartItem.cart.id === cartId);
-    
+
             if (existingCartItem) {
                 // Calculate new quantity
                 const updatedQuantity = existingCartItem.quantity + quantity;
-    
+
                 // Update cart item in backend
                 const updatedCartItem = await handleUpdateQuantity(product.id, updatedQuantity, cartId);
-    
+
                 if (updatedCartItem) {
                     console.log('Updated cart item:', updatedCartItem);
                     // Update cart items state if quantity updated
@@ -116,6 +154,10 @@ const Details = ({ setCartItems, cartItems }) => {
                                 : cartItem
                         )
                     );
+                    // Update product quantity in backend
+                    const newProductQuantity = product.quantity - quantity;
+                    await updateProductQuantity(product.id, newProductQuantity);
+                    setProduct(prevProduct => ({ ...prevProduct, quantity: newProductQuantity }));
                 } else {
                     throw new Error('Failed to update cart item quantity.');
                 }
@@ -126,9 +168,9 @@ const Details = ({ setCartItems, cartItems }) => {
                     cart: { id: cartId },
                     quantity: quantity
                 };
-    
+
                 const response = await axios.post('http://localhost:8080/api/cartItems', cartItem);
-    
+
                 if (response.data && response.data.id) {
                     const newCartItem = {
                         ...response.data,
@@ -137,38 +179,64 @@ const Details = ({ setCartItems, cartItems }) => {
                     };
                     console.log('Added new cart item:', newCartItem);
                     setCartItems(prevCartItems => [...prevCartItems, newCartItem]);
-                    // localStorage.setItem("cartItems", JSON.stringify([...cartItems, newCartItem])); // Avoid unnecessary localStorage update
+                    // Update product quantity in backend
+                    const newProductQuantity = product.quantity - quantity;
+                    await updateProductQuantity(product.id, newProductQuantity);
+                    setProduct(prevProduct => ({ ...prevProduct, quantity: newProductQuantity }));
                 } else {
                     throw new Error('Failed to add new cart item.');
                 }
             }
-    
+
             // Reset quantity input after adding to cart
             setQuantity(1);
             toast.success("Thêm sản phẩm thành công");
+            setTimeout(() => {
+            }, 2000);
         } catch (error) {
             console.error('Error adding product to cart:', error);
         }
     };
-    
     const buyNow = async () => {
         if (!user) {
             navigate('/login');
             return;
         }
-
         try {
+            console.log('Adding to cart:', { productId: product.id, quantity, cartItems });
             let cartId;
             const cartResponse = await axios.get(`http://localhost:8080/api/carts/user/${user.userId}`);
             if (cartResponse.data.length > 0) {
                 cartId = cartResponse.data[0].id;
             }
-
+            console.log('User cart ID:', cartId);
             const existingCartItem = cartItems.find(cartItem => cartItem.product.id === product.id && cartItem.cart.id === cartId);
 
             if (existingCartItem) {
-                await handleUpdateQuantity(product.id, existingCartItem.quantity + quantity, cartId);
+                // Calculate new quantity
+                const updatedQuantity = existingCartItem.quantity + quantity;
+
+                // Update cart item in backend
+                const updatedCartItem = await handleUpdateQuantity(product.id, updatedQuantity, cartId);
+
+                if (updatedCartItem) {
+                    // Update cart items state if quantity updated
+                    setCartItems(prevCartItems =>
+                        prevCartItems.map(cartItem =>
+                            cartItem.product.id === product.id && cartItem.cart.id === cartId
+                                ? { ...cartItem, quantity: updatedCartItem.quantity }
+                                : cartItem
+                        )
+                    );
+                    // Update product quantity in backend
+                    const newProductQuantity = product.quantity - quantity;
+                    await updateProductQuantity(product.id, newProductQuantity);
+                    setProduct(prevProduct => ({ ...prevProduct, quantity: newProductQuantity }));
+                } else {
+                    throw new Error('Failed to update cart item quantity.');
+                }
             } else {
+                // If item does not exist in cart, add new cart item
                 const cartItem = {
                     product: { id: product.id },
                     cart: { id: cartId },
@@ -183,16 +251,20 @@ const Details = ({ setCartItems, cartItems }) => {
                         product: { id: product.id },
                         cart: { id: cartId }
                     };
-                    setCartItems((prevCartItems) => [...prevCartItems, newCartItem]);
-                    localStorage.setItem("cartItems", JSON.stringify([...cartItems, newCartItem]));
+                    console.log('Added new cart item:', newCartItem);
+                    setCartItems(prevCartItems => [...prevCartItems, newCartItem]);
+                    // Update product quantity in backend
+                    const newProductQuantity = product.quantity - quantity;
+                    await updateProductQuantity(product.id, newProductQuantity);
+                    setProduct(prevProduct => ({ ...prevProduct, quantity: newProductQuantity }));
                 } else {
-                    console.error('Error in response data:', response.data);
+                    throw new Error('Failed to add new cart item.');
                 }
             }
-
+            // Reset quantity input after adding to cart
             setQuantity(1);
             setTimeout(() => {
-                navigate('/shopping-cart'); // Navigate to shopping cart after adding item
+                navigate('/gio-hang'); // Navigate to shopping cart after adding item
             }, 1000);
         } catch (error) {
             console.error('Error adding product to cart:', error);
@@ -263,16 +335,17 @@ const Details = ({ setCartItems, cartItems }) => {
                                     <dt className="col-sm-3">Thời gian nhận hàng:</dt>
                                     <dd className="col-sm-9">3-4 ngày</dd>
                                     <dt className="col-sm-3">Tình trạng</dt>
-                                    <dd className="col-sm-9">Còn hàng</dd>
-                                </dl>
+                                    <dd className="col-sm-9">{product.quantity > 0 ? "Còn hàng" : "Hết hàng"}</dd>
+                                    </dl>
                                 <div className="form-group col-md d-flex align-items-center">
                                     <button className="btn btn-primary" onClick={decreaseQuantity}>-</button>
-                                    <input type="text" value={quantity} className="form-control text-center mx-2" style={{ width: '70px' }} readOnly />
+                                    <input type="text"         value={product.quantity === 0 ? 0 : quantity}
+ className="form-control text-center mx-2" style={{ width: '70px' }} readOnly />
                                     <button className="btn btn-primary" onClick={increaseQuantity}>+</button>
                                 </div>
                                 <div className="form-row mt-4">
                                     <div className="form-group col-md">
-                                        <Link to={`/shopping-cart`} className="widget-view">
+                                        <Link to={`/gio-hang`} className="widget-view">
                                             <button className="btn" onClick={buyNow} style={{ backgroundColor: 'orange', color: '#fff' }}>
                                                 Mua ngay
                                             </button>
