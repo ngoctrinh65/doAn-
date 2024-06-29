@@ -3,7 +3,7 @@ import { PayPalButton } from "react-paypal-button-v2";
 import { useAuth } from "../../layouts/AuthContext";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import { toast, ToastContainer } from "react-toastify";
+import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 const InfoPayment = () => {
   const { user } = useAuth(); // Get the logged-in user from the AuthContext
@@ -110,7 +110,9 @@ const InfoPayment = () => {
         phone_number: phoneNumber.trim(),
         status: 0, // Assuming 0 means a new order
         total_money: finalTotalPrice,
-        user: { id: user.userId } // Assuming userId is the identifier
+        user: { id: user.userId }, // Assuming userId is the identifier
+        isHome: 1, // Assuming 0 means a new order
+
       };
 
       try {
@@ -248,8 +250,7 @@ const InfoPayment = () => {
                 amount={(totalPrice / 1000).toFixed(2)} // Converting totalPrice from dong to USD for PayPal
                 onSuccess={handlePayPalSuccess}
                 options={{
-                  clientId: "ARVt8ivC8vX3vron7Q7GmsCFKx_AaXodJjzPUSiut6p4OeNISClTaaAsQGjrYUcPhOI3lQY3OEBQFwoq"
-                }}
+                  clientId: "AZgwKH68F74d8-iZbsl3X_sdjWfPhiPfmy7yMkPzTrdmp1xmiPWM0Vllr_adis4mTtzETJs44RK_E5Ga"                }}
               />
             </div>
           </div>

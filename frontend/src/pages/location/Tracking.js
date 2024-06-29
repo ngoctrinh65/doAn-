@@ -48,15 +48,17 @@ const RoutingControl = ({ currentPosition, addressPosition, setRouteInstructions
     mainRoutingControl.on('routesfound', function (e) {
       const routes = e.routes;
       const instructionsWithCoords = routes[0].instructions.map((instruction, i) => {
-        const stepCoordinates = routes[0].coordinates[instruction.index];
+        const stepCoordinates = routes[0].coordinates[instruction.index];        console.log(`Number of route instructions: ${stepCoordinates}`);
+
         return {
           text: `Step ${i + 1}: ${instruction.text}`,
           coordinates: stepCoordinates,
         };
+
       });
 
       setRouteInstructions(instructionsWithCoords);
-      console.log(`Number of route instructions: ${instructionsWithCoords.length}`);
+      console.log(`Number of route instructions: ${instructionsWithCoords}`);
 
     });
 

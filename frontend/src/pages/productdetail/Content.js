@@ -99,16 +99,7 @@ const Details = ({ setCartItems, cartItems }) => {
 
             // Send the updated data back to the server
             const response = await axios.put(`http://localhost:8080/api/products/${productId}`, {
-                id,
-                deleted,
-                description,
-                discount,
-                price,
-                thumbnail,
-                title,
-                line_id,
-                created_at,
-                updated_at,
+               ...product,
                 quantity: newQuantity // Ensure quantity is updated
             });
 
@@ -194,7 +185,7 @@ const Details = ({ setCartItems, cartItems }) => {
             setTimeout(() => {
                 window.location.reload();
 
-            }, 2000);
+            }, 1000);
         } catch (error) {
             console.error('Error adding product to cart:', error);
         }
@@ -283,8 +274,7 @@ const Details = ({ setCartItems, cartItems }) => {
                             <a href="/">Home</a>
                         </li>
                         <li className="breadcrumb-item">
-                            {/* Add other breadcrumb items if necessary */}
-                        </li>
+Chi tiết sản phẩm                        </li>
                         <li className="breadcrumb-item active" aria-current="page">
                             {product.title}
                         </li>
@@ -331,14 +321,12 @@ const Details = ({ setCartItems, cartItems }) => {
                                 </div>
                                 <p>{product.description}</p>
                                 <dl className="row">
-                                    <dt className="col-sm-3">Nhà sản xuất</dt>
-                                    <dd className="col-sm-9"><a href="#">1Four</a></dd>
                                     <dt className="col-sm-3">Bảo hành</dt>
                                     <dd className="col-sm-9">24 tháng</dd>
                                     <dt className="col-sm-3">Thời gian nhận hàng:</dt>
                                     <dd className="col-sm-9">3-4 ngày</dd>
                                     <dt className="col-sm-3">Tình trạng</dt>
-                                    <dd className="col-sm-9">{product.quantity > 0 ? "Còn hàng" : "Hết hàng"}</dd>
+                                    <dd className="col-sm-9">{product.quantity > 0 ? product.quantity + " sản phẩm" : "Hết hàng"}</dd>
                                 </dl>
                                 <div className="form-group col-md d-flex align-items-center">
                                     <button className="btn btn-primary" onClick={decreaseQuantity}>-</button>

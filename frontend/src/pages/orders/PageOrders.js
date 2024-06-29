@@ -3,14 +3,22 @@ import { Link } from 'react-router-dom';
 import { useAuth } from "../../layouts/AuthContext";
 import { Tabs, Tab } from 'react-bootstrap';
 import './Order.css';
+import axios from "axios";
 
 const PageOrders = () => {
     const [orders, setOrders] = useState([]);
     const [orderDetails, setOrderDetails] = useState([]);
     const { user, logout } = useAuth();
     const filterOrdersByStatus = (status) => {
-        return orders.filter(order => order.status === status);
+        return orders.filter(order => order.status === status && order.isHome === 1);
     };
+    // Filter categories where 'isHome' is equal to 1
+    const filterCanceledOrders = () => {
+        const canceledOrders = orders.filter(order => order.isHome === 0);
+        console.log('Canceled Orders:', canceledOrders); // Log danh sách các đơn hàng đã hủy
+        return canceledOrders;
+    };
+    
     useEffect(() => {
         const fetchOrders = async () => {
             try {
@@ -41,6 +49,7 @@ const PageOrders = () => {
             console.error('Error fetching order details:', error);
         }
     };
+
 
     return (
         <section className="section-content padding-y">
@@ -80,6 +89,12 @@ const PageOrders = () => {
                                     <OrderCard key={index} order={order} orderDetails={orderDetails} />
                                 ))}
                             </Tab>
+                            <Tab eventKey="4" title="Đơn hàng đã hủy">
+                                {filterCanceledOrders().map((order, index) => (
+                                    <OrderCard key={index} order={order} orderDetails={orderDetails} />
+                                ))}
+                            </Tab>
+                            
                         </Tabs>
                     </main>
                 </div>
@@ -89,10 +104,77 @@ const PageOrders = () => {
 };
 
 const OrderCard = ({ order, orderDetails }) => {
-    // Tính phí vận chuyển dựa trên tùy chọn giao hàng
-    const shippingFee = order.note === "Giao hàng nhanh" ? 20 : 10; // Phí vận chuyển bằng USD
+    const shippingFee = order.note === "Giao hàng nhanh" ? 20 : 10; // Shipping fee in USD
     const totalPrice = order.total_money;
     const finalTotalPrice = totalPrice + shippingFee;
+    const handleCancelOrder = async () => {
+        try {
+            
+            const response = await axios.put(`http://localhost:8080/api/orders/${order.id}`, {
+                ...order,
+                isHome: 0 // Update is_home to 0
+            });
+            orderDetails.forEach(async (orderDetail) => {
+                try {
+                    const productResponse = await axios.get(`http://localhost:8080/api/products/${orderDetail.product.id}`);
+                    const product = productResponse.data;
+
+                    const updatedProduct = {
+                        ...product,
+                        quantity: product.quantity + orderDetail.quantity // Update product quantity
+                    };
+
+                    // Mock PUT request to update product quantity
+                    await axios.put(`http://localhost:8080/api/products/${orderDetail.product.id}`, updatedProduct);
+                    console.log(`Product quantity updated for product ${orderDetail.product.id}`);
+                } catch (error) {
+                    console.error('Error updating product quantity:', error);
+                }
+            });
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+            console.log('Order cancelled successfully:', response.data);
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+        }
+    };
+    const handleRecoverOrder = async () => {
+        try {
+            
+            const response = await axios.put(`http://localhost:8080/api/orders/${order.id}`, {
+                ...order,
+                status: 0, // Update status
+
+                isHome: 1 // Update is_home to 0
+            });
+            orderDetails.forEach(async (orderDetail) => {
+                try {
+                    const productResponse = await axios.get(`http://localhost:8080/api/products/${orderDetail.product.id}`);
+                    const product = productResponse.data;
+
+                    const updatedProduct = {
+                        ...product,
+                        
+                        quantity: product.quantity - orderDetail.quantity, // Update product quantity
+
+                    };
+
+                    // Mock PUT request to update product quantity
+                    await axios.put(`http://localhost:8080/api/products/${orderDetail.product.id}`, updatedProduct);
+                    console.log(`Product quantity updated for product ${orderDetail.product.id}`);
+                } catch (error) {
+                    console.error('Error updating product quantity:', error);
+                }
+            });
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+            console.log('Order cancelled successfully:', response.data);
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+        }
+    };
     function formatPrice(priceInXu) {
         const dong = priceInXu * 1000; // Assuming 1 dong = 100 xu
         return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(dong);
@@ -118,70 +200,50 @@ const OrderCard = ({ order, orderDetails }) => {
                     <div className="col-md-4">
                         <h6 className="text-muted">Phương thức thanh toán</h6>
                         <span className="text-success">
-                            <i className="fab fa-lg fa-cc-visa"></i>
-                            Tiền mặt                        </span>
+                            Tiền mặt
+                        </span>
                         <p>
                             Tổng tiền: {formatPrice(totalPrice)} <br />
                             Phí vận chuyển: {formatPrice(shippingFee)} <br />
                             <b>Tổng đơn: {formatPrice(finalTotalPrice)}</b>
                         </p>
+                        <td width="250">
+                            <Link to={`/tracking/${order.id}`} className="btn btn-outline-primary"> Theo dõi</Link>
+                            <div className="dropdown d-inline-block">
+                                <a href="#" data-toggle="dropdown" className="dropdown-toggle btn btn-outline-secondary">...</a>
+                                <div className="dropdown-menu dropdown-menu-right">
+                                <a href="#" className="dropdown-item" onClick={order.isHome === 0 ? () => handleRecoverOrder(order.id) : () => handleCancelOrder(order.id)}>
+                                {order.isHome === 0 ? 'Mua lại' : 'Hủy đơn'}
+                                    </a>                                </div>
+                            </div>
+                        </td>
                     </div>
                 </div>
             </div>
-            {orderDetails.slice(0, 1).map(orderDetail => (
-                <>
-                    <div className="row">
-                        <div className="col-lg-12">
-                            <div className="horizontal-timeline">
-                                <ul className="list-inline items d-flex justify-content-between">
-                                    <li className="list-inline-item items-list">
-                                        <p className="py-1 px-2 rounded text-white" style={{ backgroundColor: '#f37a27' }}>Chờ xác nhận</p>
-                                    </li>
-                                    <li className="list-inline-item items-list">
-                                        <p className="py-1 px-2 rounded text-white" style={{ backgroundColor: '#f37a27' }}>Đang giao hàng</p>
-                                    </li>
-                                    <li className="list-inline-item items-list">
-                                        <p className="py-1 px-2 rounded text-white" style={{ backgroundColor: '#f37a27' }}>Đã giao hàng</p>
-                                    </li>
+            {/* Display order details */}
+            <div className="table-responsive mt-4">
+                <table className="table table-hover">
+                    <tbody>
+                        {orderDetails.map((orderDetail, index) => (
+                            <tr key={index}>
+                                <td width="65">
+                                    <img src={`./images/items/${orderDetail.product.thumbnail}`} className="img-sm" alt={orderDetail.product.title} />
+                                </td>
+                                <td>
+                                    <p className="title mb-0">{orderDetail.product.title}</p>
+                                    <var className="price text-muted"> {formatPrice(orderDetail.price)}</var>
+                                    <p className="title mb-0">Số lượng: {orderDetail.quantity} sản phẩm</p>
 
-                                </ul>
-                            </div>
-                        </div>
-                    </div>
+                                </td>
 
-                    <div className="table-responsive mt-4">
-                        <table className="table table-hover">
-                            <tbody>
-                                <tr key={orderDetail.product.id}>
-                                    <td width="65">
-                                        <img src={`./images/items/${orderDetail.product.thumbnail}`} className="img-sm" alt={orderDetail.product.title} />
-                                    </td>
-                                    <td>
-                                        <p className="title mb-0">{orderDetail.product.title}</p>
-                                        <var className="price text-muted"> {formatPrice(orderDetail.price)}</var>
-                                    </td>
-                                    <td width="250">
-                                        <Link to={`/tracking/${order.id}`} className="btn btn-outline-primary"> Theo dõi</Link>
-                                        {/* <div className="dropdown d-inline-block">
-                                            <a href="#" data-toggle="dropdown" className="dropdown-toggle btn btn-outline-secondary">More</a>
-                                            <div className="dropdown-menu dropdown-menu-right">
-                                                <a href="#" className="dropdown-item">Hủy đơn</a>
-                                            </div>
-                                        </div> */}
-                                    </td>
-
-
-                                </tr>
-                                <h6>{orderDetails.length} sản phẩm</h6> {/* Hiển thị số lượng orderDetail */}
-                            </tbody>
-                        </table>
-
-                    </div>
-                </>
-            ))}
-        </article >
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+            <h6>{orderDetails.length} sản phẩm</h6> {/* Display number of orderDetails */}
+        </article>
     );
-
 };
 
 export default PageOrders;

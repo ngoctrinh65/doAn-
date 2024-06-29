@@ -42,60 +42,98 @@ const Content = () => {
 
         fetchCartItems();
     }, [user, navigate]);
-    const handleRemoveCartItem = async (cartItemId,productId) => {
+    const handleRemoveCartItem = async (cartItemId, productId) => {
         try {
-            // Lấy thông tin giỏ hàng từ state hoặc từ backend
-            const cartId = cartItems.find(cartItem => cartItem.product.id === productId)?.cart?.id;
-
-            if (!cartId) {
-                console.error('Cart ID not found for product ID:', productId);
+            // Find the cart item to remove
+            const cartItem = cartItems.find(cartItem => cartItem.id === cartItemId);
+            if (!cartItem) {
+                console.error('Cart item not found for cart item ID:', cartItemId);
                 return;
             }
-
-            console.log(`Removing productId ${productId} from cartId ${cartId}`);
-
+    
+            // Get the cart ID
+            const cartId = cartItem.cart.id;
+    
+            // Fetch the current product details
+            const productResponse = await axios.get(`http://localhost:8080/api/products/${productId}`);
+            const product = productResponse.data;
+    
+            // Calculate the new product quantity
+            const updatedProductQuantity = product.quantity + cartItem.quantity;
+    
+            // Create an object with the updated quantity, keeping other fields unchanged
+            const updatedProduct = {
+                ...product,
+                quantity: updatedProductQuantity,
+            };
+    
+            // Update the product quantity in the backend
+            await axios.put(`http://localhost:8080/api/products/${productId}`, updatedProduct);
+    
+            // Remove the cart item
             await axios.delete(`http://localhost:8080/api/cartItems/${cartId}/${productId}`);
-
-            // Cập nhật state của cartItems và products sau khi xóa
-            setCartItems(cartItems.filter(cartItem => cartItem.product.id !== cartItemId));
-            setProducts(products.filter(item => item.id !== cartItemId));
-            let temp = cartItems.filter(item => item.id !== cartItemId );
-            console.log("temp",temp)
-            localStorage.setItem("cartItems", JSON.stringify(temp))
-            // console.log(`Removing productId ${productId} from cartId ${cartId}`);
-
+    
+            // Update the state of cartItems and products
+            setCartItems(cartItems.filter(item => item.id !== cartItemId));
+            setProducts(products.map(item => item.id === productId ? { ...item, quantity: updatedProductQuantity } : item));
+    
+            // Update the local storage
+            const updatedCartItems = cartItems.filter(item => item.id !== cartItemId);
+            localStorage.setItem("cartItems", JSON.stringify(updatedCartItems));
+    
+            // Reload the page after a short delay
             setTimeout(() => {
                 window.location.reload();
             }, 1000);
+    
         } catch (error) {
             console.error('Failed to remove cart item:', error);
         }
     };
-
+    
     const handleUpdateQuantity = async (productId, newQuantity) => {
         try {
-            // Lấy thông tin giỏ hàng từ state hoặc từ backend
-            const cartId = cartItems.find(cartItem => cartItem.product.id === productId)?.cart?.id;
-
-            if (!cartId) {
-                console.error('Cart ID not found for product ID:', productId);
+            // Find the cart item associated with the product
+            const cartItem = cartItems.find(cartItem => cartItem.product.id === productId);
+            if (!cartItem) {
+                console.error('Cart item not found for product ID:', productId);
                 return;
             }
-
-            console.log(`Updating quantity for productId ${productId} in cartId ${cartId} with quantity ${newQuantity}`);
-
+    
+            // Get the cart ID
+            const cartId = cartItem.cart.id;
+    
+            // Update the cart item's quantity in the backend
             const response = await axios.put(`http://localhost:8080/api/cartItems/${cartId}/${productId}`, { quantity: newQuantity });
-
+    
             if (response.status === 200) {
                 console.log('Successfully updated cart item quantity.');
-                // Cập nhật state của cartItems với số lượng mới
-                setCartItems((prevCartItems) =>
-                    prevCartItems.map((cartItem) =>
-                        cartItem.product.id === productId && cartItem.cart.id === cartId
-                            ? { ...cartItem, quantity: newQuantity }
-                            : cartItem
+    
+                // Update state of cartItems with the new quantity
+                setCartItems(prevCartItems =>
+                    prevCartItems.map(item =>
+                        item.product.id === productId && item.cart.id === cartId
+                            ? { ...item, quantity: newQuantity }
+                            : item
                     )
                 );
+    
+                // Update product.quantity locally by the difference in quantities
+                const product = products.find(product => product.id === productId);
+                if (product) {
+                    const quantityDifference = newQuantity - cartItem.quantity;
+                    const updatedProduct = {
+                        ...product,
+                        quantity: product.quantity - quantityDifference,
+                    };
+    
+                    // Update the products state with the updated product quantity
+                    setProducts(prevProducts =>
+                        prevProducts.map(item =>
+                            item.id === productId ? updatedProduct : item
+                        )
+                    );
+                }
             } else {
                 console.error('Failed to update cart item quantity:', response);
             }
@@ -103,19 +141,102 @@ const Content = () => {
             console.error('Failed to update cart item quantity:', error);
         }
     };
+    
     const handleIncreaseQuantity = async (productId, currentQuantity) => {
-        const product = products.find(product => product.id === productId);
-        if (product && currentQuantity < product.quantity+1 ) {
+        try {
+            const product = products.find(product => product.id === productId);
+            if (!product) {
+                console.error('Product not found for product ID:', productId);
+                return;
+            }
+    
             const updatedQuantity = currentQuantity + 1;
+    
+            // Check if the updated quantity exceeds the available product quantity
+            if (updatedQuantity > product.quantity) {
+                console.error("Số lượng sản phẩm vượt quá số lượng trong kho");
+                return;
+            }
+    
+            // Call handleUpdateQuantity to increase the quantity by 1
             await handleUpdateQuantity(productId, updatedQuantity);
-        } else {
-            console.error("Số lượng sản phẩm vượt quá số lượng trong kho");
+    
+            // Update the product's quantity in the backend
+            const response = await axios.put(`http://localhost:8080/api/products/${productId}`, {
+                ...product,
+                quantity: product.quantity - 1 // Ensure quantity is updated
+            });
+    
+            if (response.status === 200) {
+                console.log('Successfully updated product quantity in the backend.');
+    
+                // Update product.quantity locally by subtracting 1
+                const updatedProduct = {
+                    ...product,
+                    quantity: product.quantity - 1, // Ensure to subtract 1 from product.quantity
+                };
+    
+                // Update the products state with the updated product quantity
+                setProducts(prevProducts =>
+                    prevProducts.map(item =>
+                        item.id === productId ? updatedProduct : item
+                    )
+                );
+            } else {
+                console.error('Failed to update product quantity:', response);
+            }
+    
+        } catch (error) {
+            console.error('Failed to increase product quantity:', error);
         }
     };
-    const handleDecreaseQuantity = async (cartItemId, currentQuantity) => {
-        if (currentQuantity > 1) {
+    
+    
+    const handleDecreaseQuantity = async (productId, currentQuantity) => {
+        try {
+            const product = products.find(product => product.id === productId);
+            if (!product) {
+                console.error('Product not found for product ID:', productId);
+                return;
+            }
+    
+            if (currentQuantity <= 1) {
+                console.error("Quantity cannot be decreased further");
+                return;
+            }
+    
             const updatedQuantity = currentQuantity - 1;
-            await handleUpdateQuantity(cartItemId, updatedQuantity);
+    
+            // Call handleUpdateQuantity to decrease the quantity by 1
+            await handleUpdateQuantity(productId, updatedQuantity);
+    
+            // Update the product's quantity in the backend
+            const response = await axios.put(`http://localhost:8080/api/products/${productId}`, {
+                ...product,
+                quantity: product.quantity + 1 // Ensure quantity is updated
+            });
+    
+            if (response.status === 200) {
+                console.log('Successfully updated product quantity in the backend.');
+    
+                // Update product.quantity locally by adding 1
+                const updatedProduct = {
+                    ...product,
+                    quantity: product.quantity + 1, // Ensure to add 1 to product.quantity
+                };
+    
+                // Update the products state with the updated product quantity
+                setProducts(prevProducts =>
+                    prevProducts.map(item =>
+                        item.id === productId ? updatedProduct : item
+                    )
+                );
+            } else {
+                console.error('Failed to update product quantity:', response);
+            }
+    
+        } catch (error) {
+            console.error('Failed to decrease product quantity:', error);
         }
     };
     const calculateFinalPrice = (product) => {
